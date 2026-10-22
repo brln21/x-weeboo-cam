@@ -106,6 +106,15 @@ Nilai rahasia yang HARUS keluar dari repo: `ACCOUNT_ID`, `TOKEN`, `REGION`, `CAM
   snapshot, dan video lewat WebSocket proxy jalan di browser.
 - PTZ: driver pluggable (`PTZ_DRIVER=none|exec`). Default `none` → tombol disembunyikan.
 
+### Sesi 2 — debug layar hitam di laptop tes
+- Error go2rtc: `miss: read media: cs2: pop buffer is full` (model `mxiang.camera.c301`).
+- Sebab (dari source go2rtc `internal/streams/add_consumer.go` + `pkg/xiaomi/miss/cs2/conn.go`):
+  source `xiaomi://` dan `ffmpeg:Xiaomi#video=h264` di stream yang sama → go2rtc menyambung ke
+  kamera dulu untuk audio, lalu menunggu ffmpeg. Selama menunggu, antrean media cs2 (100 paket)
+  penuh dan koneksi diputus. Ini muncul sejak player tidak lagi menawarkan H.265.
+- Solusi: pisahkan `Xiaomi_raw` (xiaomi://) dan `Xiaomi` (`ffmpeg:Xiaomi_raw#video=h264#audio=opus`).
+  Lihat go2rtc/go2rtc.yaml.example.
+
 ### Next steps
 1. Tes app dengan C301 asli (isi `server/.env`, arahkan ke go2rtc laptop tes).
 2. PTZ: cari siid/aiid motor C301 di home.miot-spec.com, isi `server/scripts/ptz-template.py`

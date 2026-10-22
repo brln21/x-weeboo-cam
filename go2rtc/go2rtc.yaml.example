@@ -21,8 +21,14 @@ xiaomi:
   "<ACCOUNT_ID>": "V1:<TOKEN>"
 
 streams:
-  Xiaomi:
+  # Koneksi mentah ke kamera (H.265 + audio PCMA). App TIDAK memakai stream ini langsung.
+  Xiaomi_raw:
     - xiaomi://<ACCOUNT_ID>:<REGION>@<CAMERA_IP>?did=<DID>&model=<MODEL>
-    # H.265 -> H.264 supaya jalan di semua browser.
-    # Kalau CPU Intel gen 6+ (Skylake) ganti ke: "ffmpeg:Xiaomi#video=h264#hardware"
-    - "ffmpeg:Xiaomi#video=h264"
+
+  # Stream yang dipakai app (GO2RTC_STREAM=Xiaomi): H.264 + Opus hasil transcode.
+  # SENGAJA dipisah dari Xiaomi_raw. Kalau source xiaomi:// dan ffmpeg: ada di stream yang sama,
+  # go2rtc menyambung ke kamera dulu (untuk audio) lalu menunggu ffmpeg siap. Selama menunggu,
+  # antrean data kamera penuh dan koneksinya putus ("cs2: pop buffer is full").
+  # Kalau CPU Intel gen 6+ (Skylake) tambahkan #hardware supaya transcode pakai QuickSync.
+  Xiaomi:
+    - "ffmpeg:Xiaomi_raw#video=h264#audio=opus"
