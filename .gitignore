@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.env
+*.local
+
+# Rahasia - JANGAN commit
+go2rtc/go2rtc.yaml
+server/users.json
+deploy/cloudflared-config.yml
+*.pem
+*.json.bak
+*.tsbuildinfo

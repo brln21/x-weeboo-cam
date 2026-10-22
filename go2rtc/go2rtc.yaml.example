@@ -1,0 +1,28 @@
+# Salin ke go2rtc/go2rtc.yaml (di-.gitignore, JANGAN commit - berisi token akun Xiaomi).
+# Jalankan: go2rtc -config go2rtc/go2rtc.yaml
+
+api:
+  # WAJIB localhost. WebUI go2rtc bisa edit config & lihat token; jangan pernah dibuka ke luar.
+  # Browser user tidak bicara ke sini - semua lewat backend (server/).
+  listen: "127.0.0.1:1984"
+
+rtsp:
+  listen: "127.0.0.1:8554"
+
+webrtc:
+  # Jalur media WebRTC (signaling-nya tetap lewat backend/tunnel).
+  # Tanpa port-forward, WebRTC dari luar rumah bisa gagal; player otomatis fallback ke MSE.
+  listen: ":8555"
+  candidates:
+    - stun:8555
+
+xiaomi:
+  # Terisi otomatis setelah login lewat WebUI go2rtc (buka http://127.0.0.1:1984 di laptop server).
+  "<ACCOUNT_ID>": "V1:<TOKEN>"
+
+streams:
+  Xiaomi:
+    - xiaomi://<ACCOUNT_ID>:<REGION>@<CAMERA_IP>?did=<DID>&model=<MODEL>
+    # H.265 -> H.264 supaya jalan di semua browser.
+    # Kalau CPU Intel gen 6+ (Skylake) ganti ke: "ffmpeg:Xiaomi#video=h264#hardware"
+    - "ffmpeg:Xiaomi#video=h264"

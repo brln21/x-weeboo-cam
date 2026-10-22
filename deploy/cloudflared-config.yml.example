@@ -1,0 +1,16 @@
+# Salin ke deploy/cloudflared-config.yml (di-.gitignore) dan isi.
+# Setup sekali:
+#   cloudflared tunnel login
+#   cloudflared tunnel create weeboo-cam
+#   cloudflared tunnel route dns weeboo-cam cam.domainmu.com
+# Jalankan:
+#   cloudflared tunnel --config deploy/cloudflared-config.yml run
+
+tunnel: <TUNNEL_ID>
+credentials-file: C:\Users\<USER>\.cloudflared\<TUNNEL_ID>.json
+
+ingress:
+  # Arahkan ke BACKEND (server/), bukan ke go2rtc :1984.
+  - hostname: cam.domainmu.com
+    service: http://localhost:3000
+  - service: http_status:404
