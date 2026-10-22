@@ -13,9 +13,18 @@ export interface PlayerStatus {
  */
 export class CamPlayer extends VideoRTC {
   private current: PlayerMode = 'loading';
+  private lastError = '';
+
+  constructor() {
+    super();
+    // Jangan tawarkan H.265 ke go2rtc: browser yang mengaku bisa HEVC (Chrome/Edge di
+    // Windows) akan dikirimi H.265 mentah dari kamera. Selalu pakai transcode H.264.
+    this.CODECS = this.CODECS.filter((codec) => !codec.startsWith('hvc1'));
+  }
 
   private emit(status: PlayerStatus) {
     this.current = status.mode;
+    this.lastError = status.error || '';
     this.dispatchEvent(new CustomEvent<PlayerStatus>('camstatus', { detail: status }));
   }
 
@@ -51,8 +60,15 @@ export class CamPlayer extends VideoRTC {
   }
 
   onclose() {
+    // WebSocket juga ditutup sengaja setelah WebRTC tersambung (wsState sudah CLOSED);
+    // itu bukan putus koneksi, jadi status RTC jangan ditimpa.
+    if (this.wsState === WebSocket.CLOSED) return super.onclose();
     const reconnecting = super.onclose();
-    this.emit({ mode: reconnecting ? 'loading' : 'offline' });
+    this.emit({
+      mode: reconnecting ? 'loading' : 'offline',
+      // Pesan error dari go2rtc lebih berguna daripada pesan umum.
+      error: this.lastError || 'Koneksi stream terputus, mencoba lagi… (cek log terminal backend)',
+    });
     return reconnecting;
   }
 

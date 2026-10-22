@@ -1,4 +1,5 @@
 export class VideoRTC extends HTMLElement {
+  CODECS: string[];
   mode: string;
   media: string;
   background: boolean;

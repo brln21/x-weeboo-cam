@@ -100,7 +100,7 @@ app.get('/api/auth/me', requireUser, (req, res) => {
 
 const proxy = httpProxy.createProxyServer({ target: config.go2rtcUrl, changeOrigin: true });
 proxy.on('error', (err, req, resOrSocket) => {
-  console.error('go2rtc proxy error:', err.message);
+  console.error(`[go2rtc] gagal meneruskan ${req.url} ke ${config.go2rtcUrl}: ${err.message}`);
   if (resOrSocket instanceof http.ServerResponse) {
     if (!resOrSocket.headersSent) resOrSocket.writeHead(502, { 'Content-Type': 'application/json' });
     resOrSocket.end(JSON.stringify({ error: 'go2rtc tidak bisa dihubungi' }));
@@ -182,14 +182,23 @@ const server = http.createServer(app);
 
 server.on('upgrade', (req, socket, head) => {
   const url = new URL(req.url, 'http://x');
-  const reject = (status) => {
+  const reject = (status, reason) => {
+    console.warn(`[ws] ditolak ${status}: ${reason}`);
     socket.end(`HTTP/1.1 ${status}\r\nConnection: close\r\nContent-Length: 0\r\n\r\n`);
   };
 
-  if (url.pathname !== '/api/camera/ws') return reject('404 Not Found');
+  if (url.pathname !== '/api/camera/ws') return reject('404 Not Found', url.pathname);
   // Cegah cross-site WebSocket hijacking.
-  if (!req.headers.origin || !originAllowed(req)) return reject('403 Forbidden');
-  if (!userFromRequest(req)) return reject('401 Unauthorized');
+  if (!req.headers.origin || !originAllowed(req)) {
+    return reject(
+      '403 Forbidden',
+      `origin ${req.headers.origin || '(kosong)'} tidak cocok dengan host ${req.headers.host}` +
+        (config.allowedOrigins.length ? ` / ALLOWED_ORIGINS ${config.allowedOrigins.join(',')}` : ''),
+    );
+  }
+  const user = userFromRequest(req);
+  if (!user) return reject('401 Unauthorized', 'belum login atau sesi habis');
+  console.log(`[ws] stream "${config.stream}" dibuka oleh ${user.username}`);
 
   // Stream dipaksa dari config; parameter src dari client diabaikan.
   req.url = `/api/ws?src=${src}`;
@@ -199,6 +208,29 @@ server.on('upgrade', (req, socket, head) => {
   proxy.ws(req, socket, head);
 });
 
+// Cek awal supaya salah setting langsung kelihatan di terminal, bukan cuma layar hitam.
+async function checkGo2rtc() {
+  try {
+    const res = await fetch(`${config.go2rtcUrl}/api/streams`, { signal: AbortSignal.timeout(3000) });
+    if (!res.ok) {
+      console.warn(`[go2rtc] ${config.go2rtcUrl} membalas HTTP ${res.status} (pakai username/password?)`);
+      return;
+    }
+    const names = Object.keys(await res.json());
+    if (names.includes(config.stream)) {
+      console.log(`[go2rtc] OK, stream "${config.stream}" ditemukan`);
+    } else {
+      console.warn(
+        `[go2rtc] stream "${config.stream}" TIDAK ada. Yang ada: ${names.join(', ') || '(kosong)'}. ` +
+          'Cek GO2RTC_STREAM di server/.env (huruf besar/kecil berpengaruh).',
+      );
+    }
+  } catch (err) {
+    console.warn(`[go2rtc] tidak bisa dihubungi di ${config.go2rtcUrl}: ${err.cause?.code || err.message}. ` +
+      'go2rtc sudah jalan? GO2RTC_URL di server/.env sudah benar?');
+  }
+}
+
 server.listen(config.port, config.host, () => {
   console.log(`weeboo-cam server di http://${config.host}:${config.port}`);
   console.log(`go2rtc: ${config.go2rtcUrl} (stream "${config.stream}")`);
@@ -206,4 +238,5 @@ server.listen(config.port, config.host, () => {
   if (!loadUsers().length) {
     console.warn('Belum ada user. Buat dengan: npm run user:add -- <username> <viewer|controller>');
   }
+  checkGo2rtc();
 });
