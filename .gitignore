@@ -4,7 +4,8 @@ dist/
 *.local
 
 # Rahasia - JANGAN commit
-go2rtc/go2rtc.yaml
+# di folder mana pun (root repo, go2rtc/, dst.) - berisi token akun Xiaomi
+go2rtc.yaml
 server/users.json
 deploy/cloudflared-config.yml
 *.pem
