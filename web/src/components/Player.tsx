@@ -10,9 +10,11 @@ export interface PlayerHandle {
 
 interface Props {
   src: string;
+  /** Daftar mode VideoRTC, urutan = prioritas (lihat player/modes.ts). */
+  mode: string;
 }
 
-const Player = forwardRef<PlayerHandle, Props>(function Player({ src }, ref) {
+const Player = forwardRef<PlayerHandle, Props>(function Player({ src, mode }, ref) {
   const containerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<CamPlayer | null>(null);
   const [status, setStatus] = useState<PlayerStatus>({ mode: 'loading' });
@@ -20,8 +22,9 @@ const Player = forwardRef<PlayerHandle, Props>(function Player({ src }, ref) {
   useEffect(() => {
     const player = document.createElement('cam-player') as CamPlayer;
     // WebRTC paling low-latency; MSE lewat WebSocket jalan walau UDP diblok (mis. lewat tunnel).
-    player.mode = 'webrtc,mse,hls,mjpeg';
+    player.mode = mode;
     player.media = 'video,audio';
+    setStatus({ mode: 'loading' });
     const onStatus = (e: Event) => setStatus((e as CustomEvent<PlayerStatus>).detail);
     player.addEventListener('camstatus', onStatus);
     containerRef.current!.appendChild(player);
@@ -33,7 +36,7 @@ const Player = forwardRef<PlayerHandle, Props>(function Player({ src }, ref) {
       player.remove();
       playerRef.current = null;
     };
-  }, [src]);
+  }, [src, mode]);
 
   useImperativeHandle(ref, () => ({
     toggleMute() {

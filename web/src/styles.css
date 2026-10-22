@@ -208,6 +208,29 @@ button:focus-visible,
   gap: 8px;
 }
 
+.select {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 4px 0 12px;
+  min-height: 44px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.select select {
+  font: inherit;
+  color: var(--text);
+  background: transparent;
+  border: 0;
+  padding: 8px 4px;
+}
+
+.select select option {
+  background: var(--panel);
+}
+
 .ptz {
   display: flex;
   flex-direction: column;

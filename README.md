@@ -91,6 +91,11 @@ lewat driver yang bisa diganti:
 ## Catatan
 
 - **Codec:** player minta H.264 (hasil transcode go2rtc). Urutan mode: WebRTC → MSE → HLS → MJPEG.
+- **Mode player:** sama seperti `stream.html?src=Xiaomi&mode=...` di go2rtc. Bisa dipilih dari dropdown
+  "Mode", atau lewat URL app, mis. `https://cam.domainmu.com/?mode=webrtc,mse,hls,mjpeg` atau `?mode=mse`.
+  Nilai yang dikenal: `webrtc`, `webrtc/tcp`, `mse`, `hls`, `mp4`, `mjpeg` (urutan = prioritas).
+  Pilihan terakhir diingat di browser. Halaman `stream.html` go2rtc sendiri hanya untuk tes di
+  laptop server (`http://localhost:1984`), jangan dibuka ke internet.
 - **Lewat tunnel:** signaling WebRTC jalan lewat WebSocket, tapi media WebRTC butuh jalur UDP/TCP langsung
   ke port 8555. Kalau tidak tembus, player otomatis pakai MSE lewat WebSocket (latency sedikit lebih tinggi,
   tapi selalu jalan lewat Cloudflare).

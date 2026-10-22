@@ -12,7 +12,10 @@ export interface PlayerStatus {
  * `camstatus` supaya UI-nya dibuat di React.
  */
 export class CamPlayer extends VideoRTC {
+  private current: PlayerMode = 'loading';
+
   private emit(status: PlayerStatus) {
+    this.current = status.mode;
     this.dispatchEvent(new CustomEvent<PlayerStatus>('camstatus', { detail: status }));
   }
 
@@ -34,7 +37,8 @@ export class CamPlayer extends VideoRTC {
     this.onmessage['camstatus'] = (msg) => {
       switch (msg.type) {
         case 'error':
-          this.emit({ mode: 'loading', error: msg.value });
+          // Mode cadangan bisa gagal setelah mode lain sudah jalan; jangan timpa mode-nya.
+          this.emit({ mode: this.current, error: msg.value });
           break;
         case 'mse':
         case 'hls':
